@@ -166,9 +166,15 @@ class LogoutView(View):
 
 
 class UserInfoView(LoginRequiredMixin, View):
+
     def get(self,request):
         """进入个人信息"""
-        data = {'which_page': 0}
+        user = request.user
+        try:
+            address = user.address_set.all().latest('create_time')
+        except Address.DoesNotExist:
+            address = None
+        data = {'which_page': 0, 'address':address}
         return render(request, 'user_center_info.html', data)
 
 
