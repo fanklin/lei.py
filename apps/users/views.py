@@ -117,6 +117,7 @@ class ActiveView(View):
 
 class LoginView(View):
     def get(self, request):
+
         return render(request, 'login.html')
 
     def post(self,request):
@@ -144,6 +145,12 @@ class LoginView(View):
         else:
             request.session.set_expiry(0)   # 关闭浏览器 清除session
 
+        # 设置next跳转参数
+        next_url = request.GET.get('next', None)
+        if next_url is None:
+            return redirect(reverse('goods:index'))
+        else:
+            return redirect(next_url)
         # 响应请求登录首页
         return redirect(reverse('goods:index'))
 
