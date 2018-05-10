@@ -10,7 +10,7 @@ from django.shortcuts import render, redirect
 from django.views.generic import View
 from pymysql.err import IntegrityError
 
-from apps.users.models import User
+from apps.users.models import User, Address
 from celery_tasks.tasks import send_active_mail
 from dailyfresh import settings
 from itsdangerous import TimedJSONWebSignatureSerializer, SignatureExpired
@@ -152,7 +152,7 @@ class LoginView(View):
         else:
             return redirect(next_url)
         # 响应请求登录首页
-        return redirect(reverse('goods:index'))
+        # return redirect(reverse('goods:index'))
 
 
 class LogoutView(View):
@@ -182,5 +182,44 @@ class UserOrderView(LoginRequiredMixin, View):
 class UserAddressView(LoginRequiredMixin, View):
     def get(self,request):
         """进入地址"""
-        data = {'which_page': 2}
+        # 查询用户最新添加的地址
+        user = request.user
+        # address = Address.objects.filter(user=user)\
+        # .order_by('-create_time')[0]
+        # latest 表示获取最新添加的
+        try:
+            address = user.address_set.all().latest('create_time')
+        except Address.DoesNotExist:
+            address = None
+        data = {'which_page': 2, 'address': address}
         return render(request, 'user_center_site.html', data)
+
+    def post(self,request):
+        """新增一个用户地址"""
+        # 获取请求参数
+        receiver = request.POST.get('receiver')
+        address = request.POST.get('address')
+        zip_code = request.POST.get('zip_code')
+        mobile = request.POST.get('mobile')
+
+        # 判断参数合法性
+        if not all([receiver,address,mobile]):
+            return render(request, 'user_center_site.html', {'errmsg':'参数不能为空'})
+
+
+        # 新增一个地址
+        # address = Address()
+        # address.receiver_name = receiver
+        # address.receiver_mobile = mobile
+        # address.save
+        user = request.user
+        Address.objects.create(
+            receiver_name=receiver,
+            receiver_mobile=mobile,
+            detail_addr=address,
+            zip_code=zip_code,
+            user=user
+        )
+
+        # 响应请求
+        return redirect(reverse('users:address'))
