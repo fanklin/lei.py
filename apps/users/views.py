@@ -15,6 +15,8 @@ from celery_tasks.tasks import send_active_mail
 from dailyfresh import settings
 from itsdangerous import TimedJSONWebSignatureSerializer, SignatureExpired
 
+from utils.common import LoginRequiredMixin
+
 
 class RegisterView(View):
 
@@ -156,21 +158,21 @@ class LogoutView(View):
 
 
 
-class UserInfoView(View):
+class UserInfoView(LoginRequiredMixin, View):
     def get(self,request):
         """进入个人信息"""
         data = {'which_page': 0}
         return render(request, 'user_center_info.html', data)
 
 
-class UserOrderView(View):
+class UserOrderView(LoginRequiredMixin, View):
     def get(self,request):
         """进入订单"""
         data = {'which_page': 1}
         return render(request, 'user_center_order.html', data)
 
 
-class UserAddressView(View):
+class UserAddressView(LoginRequiredMixin, View):
     def get(self,request):
         """进入地址"""
         data = {'which_page': 2}
