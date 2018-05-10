@@ -153,3 +153,25 @@ class LogoutView(View):
         # 清除用户id
         logout(request)
         return redirect(reverse('goods:index'))
+
+
+
+class UserInfoView(View):
+    def get(self,request):
+        """进入个人信息"""
+        data = {'which_page': 0}
+        return render(request, 'user_center_info.html', data)
+
+
+class UserOrderView(View):
+    def get(self,request):
+        """进入订单"""
+        data = {'which_page': 1}
+        return render(request, 'user_center_order.html', data)
+
+
+class UserAddressView(View):
+    def get(self,request):
+        """进入地址"""
+        data = {'which_page': 2}
+        return render(request, 'user_center_site.html', data)

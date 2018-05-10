@@ -12,4 +12,7 @@ urlpatterns = [
     url(r'^login$', views.LoginView.as_view(), name='login'),
     url(r'^logout$', views.LogoutView.as_view(), name='logout'),
     url(r'^active/(?P<token>.+)$', views.ActiveView.as_view(), name='active'),
+    url(r'^order$', views.UserOrderView.as_view(), name='order'),
+    url(r'^address$', views.UserAddressView.as_view(), name='address'),
+    url(r'$', views.UserInfoView.as_view(), name='info'),
 ]
