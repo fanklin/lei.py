@@ -8,8 +8,10 @@ from django.db.utils import IntegrityError
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.views.generic import View
+from django_redis import get_redis_connection
 from pymysql.err import IntegrityError
 
+from apps.goods.models import GoodsSKU
 from apps.users.models import User, Address
 from celery_tasks.tasks import send_active_mail
 from dailyfresh import settings
@@ -174,7 +176,14 @@ class UserInfoView(LoginRequiredMixin, View):
             address = user.address_set.all().latest('create_time')
         except Address.DoesNotExist:
             address = None
-        data = {'which_page': 0, 'address':address}
+        # 要从redis数据库中读取用户的浏览记录
+        strict_redis = get_redis_connection()
+        key = 'history_%s' % request.user.id
+        # 最多只显示三个浏览记录
+        sku_ids = strict_redis.lrange(key, 0, 2)
+        skus = GoodsSKU.objects.filter(id__in=sku_ids)
+
+        data = {'which_page': 0, 'address':address, 'skus': skus}
         return render(request, 'user_center_info.html', data)
 
 
