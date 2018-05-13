@@ -1,5 +1,7 @@
 from django.shortcuts import render
 from django.views.generic import View
+from django_redis import get_redis_connection
+from redis.client import StrictRedis
 
 from apps.goods.models import GoodsCategory, IndexSlideGoods, IndexPromotion, IndexCategoryGoods
 from apps.users.models import User
@@ -32,26 +34,38 @@ class IndexView(View):
         except :
             pass
         # 类别商品数据
+        #  查询当前类别所有的文字商品和图片商品
         for c in categories:
             text_skus = IndexCategoryGoods.objects.filter(
                 category=c,display_type=0).order_by('index')
             imgs_skus = IndexCategoryGoods.objects.filter(
                 category=c,display_type=1).order_by('index')
-
+            # 动态地给类别对象,新增属性
             c.text_skus = text_skus
             c.imgs_skus = imgs_skus
         # for c in categories:
-        #     # 查询当前类别所有的文字商品和图片商品
+        #
         #     text_skus = IndexCategoryGoods.objects.filter(
         #         category=c, display_type=0).order_by('index')
         #     imgs_skus = IndexCategoryGoods.objects.filter(
         #         category=c, display_type=1).order_by('index')
-        #     # 动态地给类别对象,新增属性
+        #
         #     c.text_skus = text_skus
         #     c.imgs_skus = imgs_skus
 
         # 购物车商品数据
         cart_count = 0
+
+        if request.user.is_authenticated():  # 已经登录
+            strict_redis = get_redis_connection('default')
+            key = 'cart_%s' % request.user.id
+
+            # 获取所有的数量（列表）
+            values = strict_redis.hvals(key)
+
+            for count in values:
+                cart_count +=int(count)  # count为字符串
+
         # 定义模板显示的数据
         context = {
             'categories': categories,
