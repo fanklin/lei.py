@@ -68,3 +68,9 @@ class IndexView(View):
 
 
         return render(request, 'index.html', context)
+
+
+class DetailView(View):
+    """商品详情"""
+    def get(self,request, sku_id):
+        return render(request,'detail.html')
