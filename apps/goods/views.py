@@ -1,9 +1,13 @@
-from django.shortcuts import render
+from django.core.cache import cache
+from django.core.paginator import Paginator, EmptyPage
+from django.core.urlresolvers import reverse
+from django.http.response import HttpResponse
+from django.shortcuts import render, redirect
 from django.views.generic import View
 from django_redis import get_redis_connection
 from redis.client import StrictRedis
-from django.core.cache import cache
-from apps.goods.models import GoodsCategory, IndexSlideGoods, IndexPromotion, IndexCategoryGoods
+
+from apps.goods.models import GoodsCategory, IndexSlideGoods, IndexPromotion, IndexCategoryGoods, GoodsSKU
 from apps.users.models import User
 
 
@@ -71,6 +75,43 @@ class IndexView(View):
 
 
 class DetailView(View):
-    """商品详情"""
-    def get(self,request, sku_id):
-        return render(request,'detail.html')
+    """商品详情显示界面"""
+    def get(self, request, sku_id):
+        # 查询数据库中的数据
+        # 所有的类别
+        categories = GoodsCategory.objects.all()
+        # 当前要显示的商品sku
+        try:
+            sku = GoodsSKU.objects.get(id=sku_id)
+        except GoodsSKU.DoesNotExist:
+            # return HttpResponse('商品不存在')
+            return redirect(reverse('goods:index'))
+        # 新品推荐
+        new_skus = GoodsSKU.objects.filter(category=sku.category) \
+                       .order_by('-create_time')[0:2]  # 取出两个数据(包含头不包含尾)
+
+        # todo:其他规格商品sku
+        # 购物车数量
+        # 购物车商品数据
+        cart_count = 0
+
+        if request.user.is_authenticated():  # 已经登录
+            strict_redis = get_redis_connection('default')
+            key = 'cart_%s' % request.user.id
+
+            # 获取所有的数量（列表）
+            values = strict_redis.hvals(key)
+
+            for count in values:
+                cart_count += int(count)  # count为字符串
+
+        # 保存用户浏览的商品记录到redis
+        context = {
+            'sku':sku,
+            'categories':categories,
+            'cart_count':cart_count,
+            'new_skus':new_skus,
+        }
+
+        return render(request, 'detail.html',context)
+

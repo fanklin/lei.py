@@ -13,6 +13,7 @@ from django.template import loader
 
 from apps.goods.models import IndexCategoryGoods, IndexPromotion, IndexSlideGoods, GoodsCategory
 from dailyfresh import settings
+
 # 创建celery客户端
 app = Celery('dailyfresh', broker='redis://127.0.0.1:6379/1')
 
