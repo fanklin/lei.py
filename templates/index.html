@@ -30,6 +30,11 @@
 <div class="center_con clearfix">
     <ul class="subnav fl">
 
+        {# 显示商品类别 #}
+            {% for category in categories %}
+                <li><a href="#model0{{ forloop.counter }}"
+                       class="{{ category.logo }}">{{ category.name }}</a></li>
+            {% endfor %}
 
 
     </ul>

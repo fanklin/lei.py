@@ -120,51 +120,66 @@ class DetailView(View):
 class ListView(View):
     """商品列表界面"""
     def get(self, request, category_id, page_num):
-        # 获取请求参数  获取排序条件
+
+        # 获取请求参数: 获取排序条件
         sort = request.GET.get('sort')
+
+        # todo: 查询数据库中的数据
         # 所有的类别
         categories = GoodsCategory.objects.all()
         # 当前类别对象
         try:
-            category = GoodsCategory.objects.filter(id=category_id)
+            category = GoodsCategory.objects.get(id=category_id)
         except GoodsCategory.DoesNotExist:
             return redirect(reverse('goods:index'))
-
         # 当前类别所有的商品
         if sort == 'price':
             skus = GoodsSKU.objects.filter(category=category).order_by('price')
-        elif sort == 'hot':  # 销量从高到底
+        elif sort == "hot":  # 销量从高到低
             skus = GoodsSKU.objects.filter(category=category).order_by('-sales')
         else:
             skus = GoodsSKU.objects.filter(category=category)
             sort = 'default'
+
+        # 创建分页对象
+        # 参数1: 所有的数据
+        # 参数2: 每页显示多少条
+        paginator = Paginator(skus, 2)
+        # 页码列表: [1, 2, 3,4]
+        page_range = paginator.page_range
+        try:
+            page = paginator.page(page_num)
+        except EmptyPage:  # 没有获取到分页数据
+            page = paginator.page(1)  # 获取获取第一页数据
+
         # 新品推荐
         new_skus = GoodsSKU.objects.filter(category=category) \
-                       .order_by('-create_time')[0:2] # 获取两条数据
-        # 购物车数量
+                       .order_by('-create_time')[0:2]  # 获取两条数量
+
+        # 购物车商品数量
         cart_count = 0
-
         if request.user.is_authenticated():  # 已经登录
+            # 获取当前登录用户添加到购物车的商品的总数量
+            # cart_1 = {1： 2, 2： 2}
             strict_redis = get_redis_connection('default')
+            # strict_redis = StrictRedis()
             key = 'cart_%s' % request.user.id
-
-            # 获取所有的数量（列表）
-            values = strict_redis.hvals(key)
-
-            for count in values:
+            # 获取所有的数量 (返回列表)
+            # 2 ,2
+            vals = strict_redis.hvals(key)
+            # 累加商品数量
+            for count in vals:
                 cart_count += int(count)  # count为字符串
-        # 分页数据
 
+        # 分页数据
         context = {
             'category': category,
             'categories': categories,
-            'skus': skus,
+            'page': page,
             'new_skus': new_skus,
             'cart_count': cart_count,
+            'page_range': page_range,
             'sort': sort,
-
         }
-
-
 
         return render(request, 'list.html', context)
