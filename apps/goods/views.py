@@ -6,6 +6,7 @@ from django.shortcuts import render, redirect
 from django.views.generic import View
 from django_redis import get_redis_connection
 from redis.client import StrictRedis
+from whoosh.externalsort import sort
 
 from apps.goods.models import GoodsCategory, IndexSlideGoods, IndexPromotion, IndexCategoryGoods, GoodsSKU
 from apps.users.models import User
@@ -115,3 +116,55 @@ class DetailView(View):
 
         return render(request, 'detail.html',context)
 
+
+class ListView(View):
+    """商品列表界面"""
+    def get(self, request, category_id, page_num):
+        # 获取请求参数  获取排序条件
+        sort = request.GET.get('sort')
+        # 所有的类别
+        categories = GoodsCategory.objects.all()
+        # 当前类别对象
+        try:
+            category = GoodsCategory.objects.filter(id=category_id)
+        except GoodsCategory.DoesNotExist:
+            return redirect(reverse('goods:index'))
+
+        # 当前类别所有的商品
+        if sort == 'price':
+            skus = GoodsSKU.objects.filter(category=category).order_by('price')
+        elif sort == 'hot':  # 销量从高到底
+            skus = GoodsSKU.objects.filter(category=category).order_by('-sales')
+        else:
+            skus = GoodsSKU.objects.filter(category=category)
+            sort = 'default'
+        # 新品推荐
+        new_skus = GoodsSKU.objects.filter(category=category) \
+                       .order_by('-create_time')[0:2] # 获取两条数据
+        # 购物车数量
+        cart_count = 0
+
+        if request.user.is_authenticated():  # 已经登录
+            strict_redis = get_redis_connection('default')
+            key = 'cart_%s' % request.user.id
+
+            # 获取所有的数量（列表）
+            values = strict_redis.hvals(key)
+
+            for count in values:
+                cart_count += int(count)  # count为字符串
+        # 分页数据
+
+        context = {
+            'category': category,
+            'categories': categories,
+            'skus': skus,
+            'new_skus': new_skus,
+            'cart_count': cart_count,
+            'sort': sort,
+
+        }
+
+
+
+        return render(request, 'list.html', context)
