@@ -57,7 +57,20 @@ HAYSTACK_CONNECTIONS = {
      'PATH': os.path.join(BASE_DIR, 'whoosh_index'),
  }
 }
+# 配置haystack框架
+HAYSTACK_CONNECTIONS = {
+ 'default': {
+     # # 使用whoosh搜索引擎
+     # 'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
+     # 使用whoosh搜索引擎(使用jiebar中文分词工具)
+     'ENGINE': 'haystack.backends.whoosh_cn_backend.WhooshEngine',
+     # 指定生成的索引库保存在哪个目录下
+     'PATH': os.path.join(BASE_DIR, 'whoosh_index'),
+ }
+}
 
+# 设置全文检索结果每页显示两条数据
+HAYSTACK_SEARCH_RESULTS_PER_PAGE = 2
 # 当添加、修改、删除了数据时，自动生成索引
 HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
 
@@ -172,3 +185,4 @@ LOGIN_URL = '/users/login'
 
 # 使用自定义的文件存储类
 DEFAULT_FILE_STORAGE = 'utils.fastdfs.storage.FdfsStorage'
+
