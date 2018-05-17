@@ -108,6 +108,7 @@
 
 {% block bottom_js %}
 <div class="add_jump"></div>
+    {% csrf_token %}
     {% load staticfiles %}
 	<script type="text/javascript" src="{% static 'js/jquery-1.12.4.min.js' %}"></script>
 	<script type="text/javascript">
