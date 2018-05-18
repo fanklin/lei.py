@@ -48,7 +48,7 @@
 			<p>{{ sku.title }}</p>
 			<div class="prize_bar">
 				<span class="show_pirze">¥<em>{{ sku.price }}</em></span>
-				<span class="show_unit">单  位：{{ sku.unit }}g</span>
+				<span class="show_unit">单  位：{{ sku.unit }}</span>
 			</div>
 			<div class="goods_num clearfix">
 				<div class="num_name fl">数 量：</div>
@@ -61,7 +61,7 @@
 			<div class="total">总价：<em>16.80元</em></div>
 			<div class="operate_btn">
 				<a href="javascript:;" class="buy_btn">立即购买</a>
-				<a href="javascript:;" class="add_cart" id="add_cart">加入购物车</a>
+				<a href="javascript:;" class="add_cart" sku_id="{{ sku.id }}" id="add_cart">加入购物车</a>
 			</div>
 		</div>
 	</div>
@@ -128,6 +128,7 @@
         $('.total').children('em').html(total_amount.toFixed(2) + '元')
 
     }
+
     //todo:加号逻辑；
     $('.add').click(function () {
         //商品数量
@@ -139,6 +140,7 @@
         //刷新总金额显示
         update_goods_amount();
     });
+
     //todo:减号逻辑；
     $('.minus').click(function () {
         //商品数量
@@ -168,24 +170,48 @@
         update_goods_amount();
     });
 
-		var $add_x = $('#add_cart').offset().top;
-		var $add_y = $('#add_cart').offset().left;
+    //todo:发post请求，添加到购物车
+    $('#add_cart').click(function () {
+        var sku_id = $(this).attr('sku_id');
+        var count = $('.num_show').val();
+        var token = $('input[name="csrfmiddlewaretoken"]').val();
+        //alert(token);
+        //定义post请求参数
+        params = {
+            'sku_id':sku_id,
+            'count':count,
+            'csrfmiddlewaretoken':token
+        };
+        //发起post请求
+        $.post('/cart/add',params,function (result) {
+            if (result.code == 0){
+              //添加到购物车成功
+                alert(result.total_count);
+                $('#show_count').text(result.total_count)
+            }else{
+                alert(result.errmsg)
+            }
+        })
+    });
 
-		var $to_x = $('#show_count').offset().top;
-		var $to_y = $('#show_count').offset().left;
+        var $add_x = $('#add_cart').offset().top;
+        var $add_y = $('#add_cart').offset().left;
 
-		$(".add_jump").css({'left':$add_y+80,'top':$add_x+10,'display':'block'})
-		$('#add_cart').click(function(){
-			$(".add_jump").stop().animate({
-				'left': $to_y+7,
-				'top': $to_x+7},
-				"fast", function() {
-					$(".add_jump").fadeOut('fast',function(){
-						$('#show_count').html(2);
-					});
+        var $to_x = $('#show_count').offset().top;
+        var $to_y = $('#show_count').offset().left;
 
-			});
-		})
-	</script>
+        $(".add_jump").css({'left':$add_y+80,'top':$add_x+10,'display':'block'})
+        $('#add_cart').click(function(){
+            $(".add_jump").stop().animate({
+                'left': $to_y+7,
+                'top': $to_x+7},
+                "fast", function() {
+                    $(".add_jump").fadeOut('fast',function(){
+                        $('#show_count').html(2);
+                    });
+
+            });
+        })
+        </script>
 {% endblock %}
 

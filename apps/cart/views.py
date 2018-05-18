@@ -1,7 +1,4 @@
 from django.http.response import JsonResponse
-from django.shortcuts import render
-
-# Create your views here.
 from django.views.generic import View
 from django_redis import get_redis_connection
 
@@ -36,7 +33,7 @@ class CartAddView(View):
         strict_redis = get_redis_connection()
         key = 'cart_%s' % user_id
         # 获取 不到会返回None
-        val = strict_redis.hget(key,sku_id)
+        val = strict_redis.hget(key, sku_id)
         if val:
             count += int(val)
 
@@ -49,14 +46,14 @@ class CartAddView(View):
 
         # 查询购物车中商品的总数量
         total_count = 0
-        vals = strict_redis.hvals()
+        vals = strict_redis.hvals(key)
         for val in vals:
             total_count +=int(val)
 
         # json方式响应添加购物车结果
         context ={
-            'code':0,
-            'total_count':total_count,
+            'code': 0,
+            'total_count': total_count,
         }
 
         return JsonResponse(context)
