@@ -1,8 +1,10 @@
 from django.http.response import JsonResponse
+from django.shortcuts import render
 from django.views.generic import View
 from django_redis import get_redis_connection
 
 from apps.goods.models import GoodsSKU
+from utils.common import LoginRequiredMixin
 
 
 class CartAddView(View):
@@ -57,3 +59,52 @@ class CartAddView(View):
         }
 
         return JsonResponse(context)
+
+
+class CartInfoView(LoginRequiredMixin, View):
+    """显示购物车界面"""
+
+    def get(self, request):
+        user_id = request.user.id
+        # 从redis数据库查询出购物车的商品id
+        strict_redis = get_redis_connection()
+        key='cart_%s' % user_id
+        sku_ids = strict_redis.hkeys(key)
+
+        # 购物车界面显示的商品
+        skus = []
+
+        # 购物车商品总数量
+        total_count = 0
+        # 购物车商品总金额
+        total_amount = 0
+
+        for sku_id in sku_ids:
+            # 从mysql数据库查询出商品对象
+            try:
+                sku = GoodsSKU.objects.get(id=sku_id)
+                # 商品的数量
+                count = strict_redis.hget(key, sku_id)
+                count = int(count)
+                # 商品的小计金额
+                amount = sku.price * count
+                skus.append(sku)
+
+                total_count += count
+                total_amount += amount
+                # 动态的给sku添加对象属性
+                sku.count = count
+                sku.amount = amount
+            except:
+                pass
+
+        context = {
+            'skus': skus,
+            'total_count': total_count,
+            'total_amount': total_amount
+        }
+
+        return render(request, 'cart.html', context)
+
+
+

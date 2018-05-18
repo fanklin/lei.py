@@ -186,7 +186,7 @@
         $.post('/cart/add',params,function (result) {
             if (result.code == 0){
               //添加到购物车成功
-                alert(result.total_count);
+                //alert(result.total_count);
                 $('#show_count').text(result.total_count)
             }else{
                 alert(result.errmsg)
@@ -207,7 +207,7 @@
                 'top': $to_x+7},
                 "fast", function() {
                     $(".add_jump").fadeOut('fast',function(){
-                        $('#show_count').html(2);
+                        $('#show_count').html(count);
                     });
 
             });
