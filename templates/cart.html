@@ -47,3 +47,72 @@
 		<li class="col04"><a href="place_order.html">去结算</a></li>
 	</ul>
 {% endblock %}
+
+{% block bottom_js %}
+    {% load staticfiles %}
+    <script src="{% static 'js/jquery-1.12.4.min.js' %}"></script>
+    <script>
+        update_goods_amount();
+
+        //todo:更新商品总数量和总金额
+        function update_goods_amount() {
+            //获取当前选中商品的多个ul元素
+            var total_count = 0;
+            var total_amount = 0;
+
+            //获取到checkbox选中的多个ul元素
+            $('.cart_list_td').find(':checked').parents('ul').each(function () {
+                //获取当前选中商品的数量和小计金额
+                var count = $(this).find('.num_show').val();
+                var price = $(this).find('.col05').text();
+                //console.log(--------- + 'count'+ '  ' + 'price')
+
+                count = parseInt(count);
+                amount = parseFloat(price) * count;
+
+                //累计总数量和总金额
+                total_count += count;
+                total_amount += amount;
+
+                // 显示总数量和总金额
+                $('.total_count').children('em').html(total_count)
+                $('.settlements').find('b').html(total_count);
+                $('.settlements').find('em').html(total_amount);
+
+            })
+        }
+
+        //todo:全选和全不选
+        //change:监听勾选状态的改变
+        $('.settlements').find(':checkbox').change(function () {
+            //获取当前checkbox勾选状态
+            var is_checked = $(this).prop('checked');
+            //alert(is_checked);
+            $('.cart_list_td').find(':checkbox').each(function () {
+                $(this).prop('checked',is_checked)
+            });
+            update_goods_amount()
+        });
+
+
+
+        //todo:设置全选checkbox勾选状态
+        //给每个商品的checkbox设置状态监听
+        $('.cart_list_td').find(':checkbox').change(function () {
+            //获取checkbox的总个数
+            var length = $('.cart_list_td').find(':checkbox').length;
+
+            //获取勾选的checkbox总个数
+            var length2 = $('.cart_list_td').find(':checked').length;
+            //如果两者相等，则全选checkbox需要勾选上
+            if (length == length2){
+                $('.settlements').find(':checkbox').prop('checked', true);
+            } else {
+                $('.settlements').find(':checkbox').prop('checked', false);
+            }
+            update_goods_amount()
+        });
+
+
+    </script>
+{% endblock %}
