@@ -74,12 +74,13 @@
                 total_count += count;
                 total_amount += amount;
 
-                // 显示总数量和总金额
-                $('.total_count').children('em').html(total_count)
-                $('.settlements').find('b').html(total_count);
-                $('.settlements').find('em').html(total_amount);
 
-            })
+            });
+            // 显示总数量和总金额
+            $('.total_count').children('em').html(total_count)
+            $('.settlements').find('b').html(total_count);
+            $('.settlements').find('em').html(total_amount);
+
         }
 
         //todo:全选和全不选
