@@ -157,7 +157,14 @@ class CartDeleteView(View):
         # 获取请求参数
         sku_id = request.POST.get('sku_id')
 
-
-
+        try:
+            sku = GoodsSKU.objects.get(id=sku_id)
+        except GoodsSKU.DoesNotExist:
+            return JsonResponse({'code': 2, 'errmsg': '商品不存在'})
         # 业务处理：删除商品
+        strict_redis = get_redis_connection()
+        key = 'cart_%s' %request.user.id
+        strict_redis.hdel(key,sku_id)
+        # 响应请求
+        return JsonResponse({'code': 0, 'errmsg': '删除成功'})
 
