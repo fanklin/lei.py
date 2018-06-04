@@ -107,35 +107,42 @@ class CartInfoView(LoginRequiredMixin, View):
         return render(request, 'cart.html', context)
 
 
-class UpdateView(View):
+class CartUpdateView(View):
+
     def post(self,request):
+
         """修改购物车商品数量"""
         # 判断登陆状态
         if not request.user.is_authenticated:
-            return JsonResponse({'code:1', 'errmsg：请先登陆'})
+            return JsonResponse({'code':1, 'errmsg':'请先登陆'})
 
         # 获取请求参数
         sku_id = request.POST.get('sku_id')
         count = request.POST.get('count')
+
+
+
         # 参数合法性判断
         if not all([sku_id,count]):
-            return JsonResponse({'code:2', 'errmsg：参数不能为空'})
+            return JsonResponse({'code':2, 'errmsg':'参数不能为空'})
 
         try:
             sku = GoodsSKU.objects.get(id=sku_id)
         except GoodsSKU.DoesNotExist:
-            return JsonResponse({'code:3', 'errmsg：商品不存在'})
+            return JsonResponse({'code':3, 'errmsg':'商品不存在'})
 
         try:
             count = int(count)
         except:
-            return JsonResponse({'code:4', 'errmsg：购买数量需为整数'})
+            return JsonResponse({'code':4, 'errmsg':'购买数量需为整数'})
         if count > sku.stock:
-            return JsonResponse({'code:5', 'errmsg：库存不足'})
+            return JsonResponse({'code':5, 'errmsg':'库存不足'})
 
         # todo:业务处理：保持 购物车商品数量
         strict_redis = get_redis_connection()
+
         key = 'cart_%s'%request.user.id
         strict_redis.hset(key,sku_id,count)
+
         # 响应json
-        return JsonResponse({'code:0', 'errmsg：修改成功'})
+        return JsonResponse({'code':0, 'errmsg':'修改成功'})
