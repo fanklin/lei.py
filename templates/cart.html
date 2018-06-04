@@ -30,7 +30,7 @@
             <li class="col06">
                 <div class="num_add">
                     <a href="javascript:;" class="add fl" sku_id = "{{ sku.id }}">+</a>
-                    <input type="text" class="num_show fl" value="{{ sku.count }}">
+                    <input type="text" class="num_show fl" sku_id = "{{ sku.id }}" value="{{ sku.count }}">
                     <a href="javascript:;" class="minus fl"sku_id = "{{ sku.id }}">-</a>
                 </div>
             </li>
@@ -208,6 +208,47 @@
                 }
             });
 
+
+        });
+
+        var origin_count = 0; //用来记录编辑前商品数量
+        $('.cart_list_td').find('.num_show').focus(function () {
+            origin_count = $(this).val();
+        });
+        //todo:手动输入商品数量
+        $('.cart_list_td').find('.num_show').blur(function () {
+            //获取当前的商品数量
+            var count = $(this).val();
+            //判断输入的合法性
+            if (isNaN(count) || count.trim().length == 0 || parseInt(count) <1){
+                count = origin_count;
+                $(this).val(count);
+                return
+            }
+            var sku_id = $(this).attr('sku_id');
+            // 定义post请求参数
+            var params = {
+                'sku_id': sku_id,
+                'count': count,
+                'csrfmiddlewaretoken': csrf,
+            };
+
+            var $ul = $(this).parents('ul');
+
+            // 通过ajax发起post请求
+            $.post('/cart/update', params, function (result) {
+                // 失败: {'code': 5, 'errmsg': '库存不足'}
+                // 成功: {'code': 0, 'message': '商品数量修改成功'}
+                if (result.code == 0) {  // 修改商品数量
+                    // todo: 刷新界面显示
+                    // 1. 刷新小计金额
+                    update_amount($ul);
+                    // 2. 刷新总数量和总金额
+                    update_goods_amount();
+                } else { // 请求失败
+                    alert(result.errmsg)
+                }
+            });
 
         })
 

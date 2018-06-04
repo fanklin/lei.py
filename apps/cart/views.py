@@ -146,3 +146,18 @@ class CartUpdateView(View):
 
         # 响应json
         return JsonResponse({'code':0, 'errmsg':'修改成功'})
+
+
+class CartDeleteView(View):
+    def post(self,request):
+        """删除购物车的商品"""
+        # 判断是否有登陆
+        if not request.user.is_authenticated():
+            return JsonResponse({'code': 1, 'errmsg': '请先登陆'})
+        # 获取请求参数
+        sku_id = request.POST.get('sku_id')
+
+
+
+        # 业务处理：删除商品
+
