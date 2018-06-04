@@ -31,7 +31,7 @@
                 <div class="num_add">
                     <a href="javascript:;" class="add fl" sku_id = "{{ sku.id }}">+</a>
                     <input type="text" class="num_show fl" value="{{ sku.count }}">
-                    <a href="javascript:;" class="minus fl">-</a>
+                    <a href="javascript:;" class="minus fl"sku_id = "{{ sku.id }}">-</a>
                 </div>
             </li>
             <li class="col07">{{ sku.amount }}元</li>
@@ -145,6 +145,49 @@
             };
 
             var $count = $(this).next();
+            var $ul = $(this).parents('ul');
+
+            // 通过ajax发起post请求
+            $.post('/cart/update', params, function (result) {
+
+                // 失败: {'code': 5, 'errmsg': '库存不足'}
+                // 成功: {'code': 0, 'message': '商品数量修改成功'}
+                if (result.code == 0) {  // 修改商品数量
+                    // todo: 刷新界面显示
+                    // 1. 刷新购买数量
+                    $count.val(count);
+                    // 2. 刷新小计金额
+                    update_amount($ul);
+                    // 3. 刷新总数量和总金额
+                    update_goods_amount();
+                } else { // 请求失败
+                    alert(result.errmsg)
+                }
+            });
+
+
+        })
+        //todo:点击减号
+        $('.minus').click(function () {
+
+            // 获取当前商品的购买数量和商品id
+            var count = $(this).prev().val();
+            var sku_id = $(this).attr('sku_id');
+            //alert(count + "   " + sku_id + "    " + csrf)
+            count = parseInt(count);
+            // 数量要减1- 1;
+            if (count<=1){
+                return
+            }
+            count = count -1;
+            // 定义post请求参数
+            var params = {
+                'sku_id': sku_id,
+                'count': count,
+                'csrfmiddlewaretoken': csrf
+            };
+
+            var $count = $(this).prev();
             var $ul = $(this).parents('ul');
 
             // 通过ajax发起post请求
