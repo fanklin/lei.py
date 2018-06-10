@@ -12,9 +12,24 @@ from apps.goods.models import GoodsCategory, IndexSlideGoods, IndexPromotion, In
 from apps.users.models import User
 
 
-class IndexView(View):
+class BaseCartView(View):
+    def get_cart_count(self,request):
+        cart_count = 0
+
+        if request.user.is_authenticated():  # 已经登录
+            strict_redis = get_redis_connection('default')
+            key = 'cart_%s' % request.user.id
+
+            # 获取所有的数量（列表）
+            values = strict_redis.hvals(key)
+
+            for count in values:
+                cart_count += int(count)  # count为字符串
+        return cart_count
 
 
+
+class IndexView(BaseCartView):
     def get(self,request):
 
         # 获取redis中的缓存数据
@@ -56,17 +71,7 @@ class IndexView(View):
         else:
             print('使用缓存')
         # 购物车商品数据
-        cart_count = 0
-
-        if request.user.is_authenticated():  # 已经登录
-            strict_redis = get_redis_connection('default')
-            key = 'cart_%s' % request.user.id
-
-            # 获取所有的数量（列表）
-            values = strict_redis.hvals(key)
-
-            for count in values:
-                cart_count += int(count)  # count为字符串
+        cart_count = super().get_cart_count(request)
 
         # 新增购物车数量的键值
         context.update(cart_count=cart_count)
@@ -75,7 +80,7 @@ class IndexView(View):
         return render(request, 'index.html', context)
 
 
-class DetailView(View):
+class DetailView(BaseCartView):
     """商品详情显示界面"""
     def get(self, request, sku_id):
         # 查询数据库中的数据
@@ -94,17 +99,7 @@ class DetailView(View):
         # todo:其他规格商品sku
         # 购物车数量
         # 购物车商品数据
-        cart_count = 0
-
-        if request.user.is_authenticated():  # 已经登录
-            strict_redis = get_redis_connection('default')
-            key = 'cart_%s' % request.user.id
-
-            # 获取所有的数量（列表）
-            values = strict_redis.hvals(key)
-
-            for count in values:
-                cart_count += int(count)  # count为字符串
+        cart_count = super().get_cart_count(request)
 
         # 保存用户浏览的商品记录到redis
         context = {
@@ -117,7 +112,7 @@ class DetailView(View):
         return render(request, 'detail.html',context)
 
 
-class ListView(View):
+class ListView(BaseCartView):
     """商品列表界面"""
     def get(self, request, category_id, page_num):
 
@@ -157,19 +152,7 @@ class ListView(View):
                        .order_by('-create_time')[0:2]  # 获取两条数量
 
         # 购物车商品数量
-        cart_count = 0
-        if request.user.is_authenticated():  # 已经登录
-            # 获取当前登录用户添加到购物车的商品的总数量
-            # cart_1 = {1： 2, 2： 2}
-            strict_redis = get_redis_connection('default')
-            # strict_redis = StrictRedis()
-            key = 'cart_%s' % request.user.id
-            # 获取所有的数量 (返回列表)
-            # 2 ,2
-            vals = strict_redis.hvals(key)
-            # 累加商品数量
-            for count in vals:
-                cart_count += int(count)  # count为字符串
+        cart_count = self.get_cart_count(request)
 
         # 分页数据
         context = {
