@@ -168,3 +168,4 @@ class CartDeleteView(View):
         # 响应请求
         return JsonResponse({'code': 0, 'errmsg': '删除成功'})
 
+
